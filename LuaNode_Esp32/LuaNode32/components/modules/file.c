@@ -2,6 +2,7 @@
 
 #include "modules.h"
 #include "lauxlib.h"
+#include "lualib.h"
 #include "platform.h"
 
 #include "c_types.h"
