@@ -25,10 +25,16 @@
 #include "rom/uart.h"
 #include "user_interface.h"
 //#include "flash_api.h"
+#include "bt.h"
+#include "esp_wifi.h"
 #include "flash_fs.h"
 #include "user_version.h"
+#if BLUEDROID_ENABLED
+#include "esp_bt_main.h"
+#endif
 #include "esp_misc.h"
 #include "esp_system.h"
+#include "esp_spi_flash.h"
 #include "vfs.h"
 
 #define CPU80MHZ 80
@@ -37,7 +43,7 @@
 // Lua: restart()
 static int node_restart(lua_State* L)
 {
-    system_restart();
+    esp_restart();
     return 0;
 }
 
@@ -45,53 +51,55 @@ static int node_restart(lua_State* L)
 static int node_dsleep(lua_State* L)
 {
     uint64_t us = luaL_optinteger(L, 1, 0);
-    system_deep_sleep(us);
+#if BT_ENABLED
+#if BLUEDROID_ENABLED
+    esp_bluedroid_disable();
+#endif
+    esp_bt_controller_disable(ESP_BT_MODE_BTDM);
+#endif
+#if WIFI_ENABLED
+    esp_wifi_stop();
+#endif
+    esp_deep_sleep(us);
     return 0;
 }
 
 // Lua: dsleep_set_options
 // Combined to dsleep( us, option )
-// static int node_deepsleep_setoption( lua_State* L )
-// {
-//   s32 option;
-//   option = luaL_checkinteger( L, 1 );
-//   if ( option < 0 || option > 4)
-//     return luaL_error( L, "wrong arg range" );
-//   else
-//    deep_sleep_set_option( option );
-//   return 0;
-// }
-// Lua: info()
+static int node_deepsleep_setoption(lua_State* L)
+{
+    s32 option;
+    option = luaL_checkinteger(L, 1);
+    if (option < ESP_PD_OPTION_OFF || option > ESP_PD_OPTION_AUTO)
+        return luaL_error(L, "wrong arg range");
+    else
+        esp_deep_sleep_pd_config(ESP_PD_DOMAIN_RTC_PERIPH, option);
+    esp_deep_sleep_pd_config(ESP_PD_DOMAIN_RTC_SLOW_MEM, option);
+    esp_deep_sleep_pd_config(ESP_PD_DOMAIN_RTC_FAST_MEM, option);
+    return 0;
+}
 
+// Lua: info()
 static int node_info(lua_State* L)
 {
-    //uint32_t fs = system_get_flash_size();
-    uint32_t fs = 2;
-    uint8 id = 0;
-    //bool succeed = system_get_chip_id(&id);
-    uint32_t hs = system_get_free_heap_size();
-    lua_getglobal(L, "print");
-    switch (fs)
+    esp_chip_info_t chip_info;
+    esp_chip_info(&chip_info);
+
+    size_t fs = spi_flash_get_chip_size();
+
+    uint8_t mac_address = 0;
+    esp_err_t mac_address_read_ok = esp_efuse_mac_get_default(&mac_address);
+    if (mac_address_read_ok != ESP_OK)
     {
-    case 0:
-        lua_pushfstring(L, "flash_size=%s, chip_id=%d, heap_size=%d", "1MB", id, hs);
-        break;
-    case 1:
-        lua_pushfstring(L, "flash_size=%s, chip_id=%d, heap_size=%d", "2MB", id, hs);
-        break;
-    case 2:
-        lua_pushfstring(L, "flash_size=%s, chip_id=%d, heap_size=%d", "4MB", id, hs);
-        break;
-    case 3:
-        lua_pushfstring(L, "flash_size=%s, chip_id=%d, heap_size=%d", "8MB", id, hs);
-        break;
-    case 4:
-        lua_pushfstring(L, "flash_size=%s, chip_id=%d, heap_size=%d", "16MB", id, hs);
-        break;
-    default:
-        lua_pushfstring(L, "flash_size=%s, chip_id=%d, heap_size=%d", "32MB", id, hs);
-        break;
+        os_printf("Unable to get default MAC address (chip I/D): %d", mac_address_read_ok);
     }
+
+    uint32_t hs = esp_get_free_heap_size();
+
+    lua_getglobal(L, "print");
+    lua_pushfstring(L, "model=%d, cores=%d, rev=%d, flash_size=%sB, chip_id/mac_address=%X, free_heap_size=%d",
+                    chip_info.model, chip_info.cores, chip_info.revision, fs, mac_address, hs);
+
     int err = lua_pcall(L, 1, 1, 0);
     if (err != 0)
     {
@@ -104,10 +112,14 @@ static int node_info(lua_State* L)
 // Lua: chipid()
 static int node_chipid(lua_State* L)
 {
-    uint8 id = 0;
-    //bool succeed = system_get_chip_id(&id);
+    uint8_t mac_address = 0;
+    esp_err_t mac_address_read_ok = esp_efuse_mac_get_default(&mac_address);
+    if (mac_address_read_ok != ESP_OK)
+    {
+        os_printf("Unable to get default MAC address (chip ID): %d", mac_address_read_ok);
+    }
     lua_getglobal(L, "print");
-    lua_pushinteger(L, id);
+    lua_pushfstring(L, "%X", mac_address);
     int err = lua_pcall(L, 1, 1, 0);
     if (err != 0)
     {
@@ -116,15 +128,6 @@ static int node_chipid(lua_State* L)
     lua_pop(L, 1);
     return 0;
 }
-
-// deprecated, moved to adc module
-// Lua: readvdd33()
-// static int node_readvdd33( lua_State* L )
-// {
-//   uint32_t vdd33 = readvdd33();
-//   lua_pushinteger(L, vdd33);
-//   return 1;
-// }
 
 // Lua: flashid()
 static int node_flashid(lua_State* L)
@@ -145,31 +148,9 @@ static int node_flashid(lua_State* L)
 // Lua: flashsize()
 static int node_flashsize(lua_State* L)
 {
-    //uint32_t sz = system_get_flash_size();
-    uint32_t sz = 2;
+    size_t fs = spi_flash_get_chip_size();
     lua_getglobal(L, "print");
-    switch (sz)
-    {
-    case 0:
-        lua_pushstring(L, "1MB");
-        break;
-    case 1:
-        lua_pushstring(L, "2MB");
-        break;
-    case 2:
-        lua_pushstring(L, "4MB");
-        break;
-    case 3:
-        lua_pushstring(L, "8MB");
-        break;
-    case 4:
-        lua_pushstring(L, "16MB");
-        break;
-    default:
-        lua_pushstring(L, "32MB");
-        break;
-    }
-    //lua_pushinteger(L, sz);
+    lua_pushfstring(L, "%dB", fs);
     int err = lua_pcall(L, 1, 1, 0);
     if (err != 0)
     {
@@ -182,7 +163,7 @@ static int node_flashsize(lua_State* L)
 // Lua: heap()
 static int node_heap(lua_State* L)
 {
-    uint32_t sz = system_get_free_heap_size();
+    uint32_t sz = esp_get_free_heap_size();
     lua_getglobal(L, "print");
     lua_pushinteger(L, sz);
     int err = lua_pcall(L, 1, 1, 0);
@@ -238,7 +219,7 @@ static void default_long_press(void* arg)
 
 static void default_short_press(void* arg)
 {
-    system_restart();
+    esp_restart();
 }
 
 static void key_long_press(void* arg)
@@ -597,7 +578,7 @@ static int node_restore(lua_State* L)
 {
     //flash_init_data_default();
     //flash_init_data_blank();
-    system_restore();
+    esp_wifi_restore();
     return 0;
 }
 
@@ -703,7 +684,7 @@ const LUA_REG_TYPE node_map[] = {
 #endif
 
     // Combined to dsleep(us, option)
-    // { LSTRKEY( "dsleepsetoption" ), LFUNCVAL( node_deepsleep_setoption) },
+    { LSTRKEY( "dsleepsetoption" ), LFUNCVAL( node_deepsleep_setoption) },
     { LNILKEY, LNILVAL }
 };
 
