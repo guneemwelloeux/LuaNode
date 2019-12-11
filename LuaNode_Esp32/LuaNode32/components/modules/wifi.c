@@ -25,10 +25,6 @@
 #include "c_stdio.h"
 #include "ip_fmt.h"
 
-struct ip_addr {
-    uint32 addr;
-};
-
 typedef void (*fill_cb_arg_fn) (lua_State *L, const system_event_t *evt);
 typedef struct
 {
