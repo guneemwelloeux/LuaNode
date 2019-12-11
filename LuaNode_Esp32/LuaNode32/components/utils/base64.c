@@ -45,35 +45,34 @@
 
 #include <base64.h>
 
-static const char base64_chars[] = 
-    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+static const char base64_chars[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
-static int 
+static int
 pos(char c)
 {
-    const char *p;
+    const char* p;
     for (p = base64_chars; *p; p++)
         if (*p == c)
             return p - base64_chars;
     return -1;
 }
 
-int 
-base64_encode(const void *data, int size, char *s, uint8_t should_pad)
+int base64_encode(const void* data, int size, char* s, uint8_t should_pad)
 {
-    char *p;
+    char* p;
     int i;
     int c;
-    const unsigned char *q;
-    char *last;
+    const unsigned char* q;
+    char* last;
     int diff;
 
     p = s;
 
-    q = (const unsigned char *) data;
+    q = (const unsigned char*)data;
     last = NULL;
     i = 0;
-    while (i < size) {
+    while (i < size)
+    {
         c = q[i++];
         c *= 256;
         if (i < size)
@@ -91,29 +90,34 @@ base64_encode(const void *data, int size, char *s, uint8_t should_pad)
         p += 4;
     }
 
-    if (last) {
+    if (last)
+    {
         diff = i - size;
-        if (diff > 0) {
-            if (should_pad) {
+        if (diff > 0)
+        {
+            if (should_pad)
+            {
                 memset(last + (4 - diff), '=', diff);
-            } else {
+            }
+            else
+            {
                 p = last + (4 - diff);
             }
         }
-    } 
+    }
 
     *p = 0;
 
     return (p - s);
 }
 
-int 
-base64_pad(char *buf, int len)
+int base64_pad(char* buf, int len)
 {
     int remainder;
 
     remainder = len % 4;
-    if (remainder == 0) {
+    if (remainder == 0)
+    {
         return (0);
     }
 
@@ -125,14 +129,15 @@ base64_pad(char *buf, int len)
 #define DECODE_ERROR -1
 
 static unsigned int
-token_decode(const char *token)
+token_decode(const char* token)
 {
     int i;
     unsigned int val = 0;
     int marker = 0;
     if (strlen(token) < 4)
         return DECODE_ERROR;
-    for (i = 0; i < 4; i++) {
+    for (i = 0; i < 4; i++)
+    {
         val *= 64;
         if (token[i] == '=')
             marker++;
@@ -146,14 +151,14 @@ token_decode(const char *token)
     return (marker << 24) | val;
 }
 
-int 
-base64_decode(const char *str, void *data)
+int base64_decode(const char* str, void* data)
 {
-    const char *p;
-    unsigned char *q;
+    const char* p;
+    unsigned char* q;
 
     q = data;
-    for (p = str; *p && (*p == '=' || strchr(base64_chars, *p)); p += 4) {
+    for (p = str; *p && (*p == '=' || strchr(base64_chars, *p)); p += 4)
+    {
         unsigned int val = token_decode(p);
         unsigned int marker = (val >> 24) & 0xff;
         if (val == DECODE_ERROR)
@@ -164,17 +169,16 @@ base64_decode(const char *str, void *data)
         if (marker < 1)
             *q++ = val & 0xff;
     }
-    return q - (unsigned char *) data;
+    return q - (unsigned char*)data;
 }
 
-
-int
-base64_decode_len(const char *str)
+int base64_decode_len(const char* str)
 {
     int len;
 
     len = strlen(str);
-    while (len && str[len - 1] == '=') {
+    while (len && str[len - 1] == '=')
+    {
         len--;
     }
     return len * 3 / 4;

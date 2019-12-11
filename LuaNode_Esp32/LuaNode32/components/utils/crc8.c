@@ -60,15 +60,16 @@ crc8_init(void)
 }
 
 uint8_t
-crc8_calc(uint8_t val, void *buf, int cnt)
+crc8_calc(uint8_t val, void* buf, int cnt)
 {
-	int i;
-	uint8_t *p = buf;
+    int i;
+    uint8_t* p = buf;
 
-	for (i = 0; i < cnt; i++) {
-		val ^= p[i];
-		val = (val << 4) ^ crc8_small_table[val >> 4];
-		val = (val << 4) ^ crc8_small_table[val >> 4];
-	}
-	return val;
+    for (i = 0; i < cnt; i++)
+    {
+        val ^= p[i];
+        val = (val << 4) ^ crc8_small_table[val >> 4];
+        val = (val << 4) ^ crc8_small_table[val >> 4];
+    }
+    return val;
 }

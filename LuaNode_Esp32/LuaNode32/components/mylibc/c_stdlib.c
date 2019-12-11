@@ -6,7 +6,7 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
-#define TRUE  1
+#define TRUE 1
 #define FALSE 0
 
 #else
@@ -18,14 +18,14 @@
 #include "c_string.h"
 
 // const char *lua_init_value = "print(\"Hello world\")";
-const char *lua_init_value = "@init.lua";
+const char* lua_init_value = "@init.lua";
 
 // int c_abs(int x){
 //  return x>0?x:0-x;
 // }
 // void c_exit(int e){
 // }
-const char *c_getenv(const char *__string)
+const char* c_getenv(const char* __string)
 {
     if (c_strcmp(__string, "LUA_INIT") == 0)
     {
@@ -56,8 +56,6 @@ const char *c_getenv(const char *__string)
 //  // NODE_ERR("-free1: %d\n", system_get_free_heap_size());
 // }c_stdlib.s
 
-
-
 // int  c_rand(void){
 // }
 // void c_srand(unsigned int __seed){
@@ -69,22 +67,22 @@ const char *c_getenv(const char *__string)
 //#include <reent.h>
 //#include "mprec.h"
 #endif
-double powersOf10[] ICACHE_STORE_ATTR =   /* Table giving binary powers of 10.  Entry */
-{
-    10.,            /* is 10^2^i.  Used to convert decimal */
-    100.,           /* exponents into floating-point numbers. */
-    1.0e4,
-    1.0e8,
-    1.0e16,
-    1.0e32,
-    1.0e64,
-    1.0e128,
-    1.0e256
-};
+double powersOf10[] ICACHE_STORE_ATTR = /* Table giving binary powers of 10.  Entry */
+    {
+        10., /* is 10^2^i.  Used to convert decimal */
+        100., /* exponents into floating-point numbers. */
+        1.0e4,
+        1.0e8,
+        1.0e16,
+        1.0e32,
+        1.0e64,
+        1.0e128,
+        1.0e256
+    };
 
-double c_strtod(const char *string, char **endPtr)
+double c_strtod(const char* string, char** endPtr)
 {
-    int maxExponent = 511;  /* Largest possible base 10 exponent.  Any
+    int maxExponent = 511; /* Largest possible base 10 exponent.  Any
                  * exponent larger than this will already
                  * produce underflow or overflow, so there's
                  * no need to worry about additional digits.
@@ -92,10 +90,10 @@ double c_strtod(const char *string, char **endPtr)
 
     int sign, expSign = FALSE;
     double fraction, dblExp, *d;
-    register const char *p;
+    register const char* p;
     register int c;
-    int exp = 0;        /* Exponent read from "EX" field. */
-    int fracExp = 0;        /* Exponent that derives from the fractional
+    int exp = 0; /* Exponent read from "EX" field. */
+    int fracExp = 0; /* Exponent that derives from the fractional
                  * part.  Under normal circumstatnces, it is
                  * the negative of the number of digits in F.
                  * However, if I is very long, the last digits
@@ -104,10 +102,10 @@ double c_strtod(const char *string, char **endPtr)
                  * unnecessary overflow on I alone).  In this
                  * case, fracExp is incremented one for each
                  * dropped digit. */
-    int mantSize;       /* Number of digits in mantissa. */
-    int decPt;          /* Number of mantissa digits BEFORE decimal
+    int mantSize; /* Number of digits in mantissa. */
+    int decPt; /* Number of mantissa digits BEFORE decimal
                  * point. */
-    const char *pExp;       /* Temporarily holds location of exponent
+    const char* pExp; /* Temporarily holds location of exponent
                  * in string. */
 
     /*
@@ -139,7 +137,7 @@ double c_strtod(const char *string, char **endPtr)
      */
 
     decPt = -1;
-    for (mantSize = 0; ; mantSize += 1)
+    for (mantSize = 0;; mantSize += 1)
     {
         c = *p;
         if (!isdigit(c))
@@ -160,7 +158,7 @@ double c_strtod(const char *string, char **endPtr)
      * they can't affect the value anyway.
      */
 
-    pExp  = p;
+    pExp = p;
     p -= mantSize;
     if (decPt < 0)
     {
@@ -168,7 +166,7 @@ double c_strtod(const char *string, char **endPtr)
     }
     else
     {
-        mantSize -= 1;          /* One of the digits was the point. */
+        mantSize -= 1; /* One of the digits was the point. */
     }
     if (mantSize > 18)
     {
@@ -189,7 +187,7 @@ double c_strtod(const char *string, char **endPtr)
     {
         int frac1, frac2;
         frac1 = 0;
-        for ( ; mantSize > 9; mantSize -= 1)
+        for (; mantSize > 9; mantSize -= 1)
         {
             c = *p;
             p += 1;
@@ -297,7 +295,7 @@ double c_strtod(const char *string, char **endPtr)
 done:
     if (endPtr != NULL)
     {
-        *endPtr = (char *) p;
+        *endPtr = (char*)p;
     }
 
     if (sign)

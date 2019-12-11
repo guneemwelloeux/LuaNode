@@ -30,21 +30,28 @@ LOCAL uint8 pinSCL = 15;
  *                uint8 SCL
  * Returns      : NONE
 *******************************************************************************/
-LOCAL void 
+LOCAL void
 i2c_master_setDC(uint8 SDA, uint8 SCL)
 {
-    SDA	&= 0x01;
-    SCL	&= 0x01;
+    SDA &= 0x01;
+    SCL &= 0x01;
     m_nLastSDA = SDA;
     m_nLastSCL = SCL;
 
-    if ((0 == SDA) && (0 == SCL)) {
+    if ((0 == SDA) && (0 == SCL))
+    {
         I2C_MASTER_SDA_LOW_SCL_LOW();
-    } else if ((0 == SDA) && (1 == SCL)) {
+    }
+    else if ((0 == SDA) && (1 == SCL))
+    {
         I2C_MASTER_SDA_LOW_SCL_HIGH();
-    } else if ((1 == SDA) && (0 == SCL)) {
+    }
+    else if ((1 == SDA) && (0 == SCL))
+    {
         I2C_MASTER_SDA_HIGH_SCL_LOW();
-    } else {
+    }
+    else
+    {
         I2C_MASTER_SDA_HIGH_SCL_HIGH();
     }
 }
@@ -56,7 +63,7 @@ i2c_master_setDC(uint8 SDA, uint8 SCL)
  * Parameters   : NONE
  * Returns      : uint8 - SDA bit value
 *******************************************************************************/
-LOCAL uint8 
+LOCAL uint8
 i2c_master_getDC(void)
 {
     uint8 sda_out;
@@ -99,11 +106,13 @@ i2c_master_init(void)
 }
 #endif
 
-uint8 i2c_master_get_pinSDA(){
+uint8 i2c_master_get_pinSDA()
+{
     return pinSDA;
 }
 
-uint8 i2c_master_get_pinSCL(){
+uint8 i2c_master_get_pinSCL()
+{
     return pinSCL;
 }
 
@@ -233,12 +242,14 @@ i2c_master_getAck(void)
 * Parameters   : NONE
 * Returns      : true : get ack ; false : get nack
 *******************************************************************************/
-bool 
-i2c_master_checkAck(void)
+bool i2c_master_checkAck(void)
 {
-    if(i2c_master_getAck()){
+    if (i2c_master_getAck())
+    {
         return FALSE;
-    }else{
+    }
+    else
+    {
         return TRUE;
     }
 }
@@ -249,8 +260,7 @@ i2c_master_checkAck(void)
 * Parameters   : NONE
 * Returns      : NONE
 *******************************************************************************/
-void 
-i2c_master_send_ack(void)
+void i2c_master_send_ack(void)
 {
     i2c_master_setAck(0x0);
 }
@@ -260,8 +270,7 @@ i2c_master_send_ack(void)
 * Parameters   : NONE
 * Returns      : NONE
 *******************************************************************************/
-void 
-i2c_master_send_nack(void)
+void i2c_master_send_nack(void)
 {
     i2c_master_setAck(0x1);
 }

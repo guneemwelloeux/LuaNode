@@ -231,58 +231,60 @@ uint16_t mqtt_get_id(uint8_t* buffer, uint16_t length)
 
     switch (mqtt_get_type(buffer))
     {
-        case MQTT_MSG_TYPE_PUBLISH:
+    case MQTT_MSG_TYPE_PUBLISH:
+    {
+        int i;
+        int topiclen;
+
+        for (i = 1; i < length; ++i)
+        {
+            if ((buffer[i] & 0x80) == 0)
             {
-                int i;
-                int topiclen;
-
-                for (i = 1; i < length; ++i)
-                {
-                    if ((buffer[i] & 0x80) == 0)
-                    {
-                        ++i;
-                        break;
-                    }
-                }
-
-                if (i + 2 >= length)
-                    return 0;
-                topiclen = buffer[i++] << 8;
-                topiclen |= buffer[i++];
-
-                if (i + topiclen >= length)
-                    return 0;
-                i += topiclen;
-
-                if (mqtt_get_qos(buffer) > 0)
-                {
-                    if (i + 2 >= length)
-                        return 0;
-                    //i += 2;
-                } else {
-                    return 0;
-                }
-
-                return (buffer[i] << 8) | buffer[i + 1];
+                ++i;
+                break;
             }
-        case MQTT_MSG_TYPE_PUBACK:
-        case MQTT_MSG_TYPE_PUBREC:
-        case MQTT_MSG_TYPE_PUBREL:
-        case MQTT_MSG_TYPE_PUBCOMP:
-        case MQTT_MSG_TYPE_SUBACK:
-        case MQTT_MSG_TYPE_UNSUBACK:
-        case MQTT_MSG_TYPE_SUBSCRIBE:
-            {
-                // This requires the remaining length to be encoded in 1 byte,
-                // which it should be.
-                if (length >= 4 && (buffer[1] & 0x80) == 0)
-                    return (buffer[2] << 8) | buffer[3];
-                else
-                    return 0;
-            }
+        }
 
-        default:
+        if (i + 2 >= length)
             return 0;
+        topiclen = buffer[i++] << 8;
+        topiclen |= buffer[i++];
+
+        if (i + topiclen >= length)
+            return 0;
+        i += topiclen;
+
+        if (mqtt_get_qos(buffer) > 0)
+        {
+            if (i + 2 >= length)
+                return 0;
+            //i += 2;
+        }
+        else
+        {
+            return 0;
+        }
+
+        return (buffer[i] << 8) | buffer[i + 1];
+    }
+    case MQTT_MSG_TYPE_PUBACK:
+    case MQTT_MSG_TYPE_PUBREC:
+    case MQTT_MSG_TYPE_PUBREL:
+    case MQTT_MSG_TYPE_PUBCOMP:
+    case MQTT_MSG_TYPE_SUBACK:
+    case MQTT_MSG_TYPE_UNSUBACK:
+    case MQTT_MSG_TYPE_SUBSCRIBE:
+    {
+        // This requires the remaining length to be encoded in 1 byte,
+        // which it should be.
+        if (length >= 4 && (buffer[1] & 0x80) == 0)
+            return (buffer[2] << 8) | buffer[3];
+        else
+            return 0;
+    }
+
+    default:
+        return 0;
     }
 }
 

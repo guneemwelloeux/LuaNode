@@ -4,15 +4,14 @@
 
 double floor(double x)
 {
-    return (double) (x < 0.f ? (((int) x) - 1) : ((int) x));
+    return (double)(x < 0.f ? (((int)x) - 1) : ((int)x));
 }
 
-#define MAXEXP 2031     /* (MAX_EXP * 16) - 1           */
-#define MINEXP -2047        /* (MIN_EXP * 16) - 1           */
+#define MAXEXP 2031 /* (MAX_EXP * 16) - 1           */
+#define MINEXP -2047 /* (MIN_EXP * 16) - 1           */
 #define HUGE MAXFLOAT
 
-double a1[] ICACHE_STORE_ATTR =
-{
+double a1[] ICACHE_STORE_ATTR = {
     1.0,
     0.95760328069857365,
     0.91700404320467123,
@@ -31,8 +30,7 @@ double a1[] ICACHE_STORE_ATTR =
     0.52213689121370692,
     0.50000000000000000
 };
-double a2[] ICACHE_STORE_ATTR =
-{
+double a2[] ICACHE_STORE_ATTR = {
     0.24114209503420288E-17,
     0.92291566937243079E-18,
     -0.15241915231122319E-17,

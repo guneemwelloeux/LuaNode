@@ -1,6 +1,6 @@
 #include "esp_system.h"
 
-int8_t ieee80211_freedom_output(uint32_t *ifx, uint8_t *buffer, uint16_t len);
+int8_t ieee80211_freedom_output(uint32_t* ifx, uint8_t* buffer, uint16_t len);
 extern void* g_wifi_menuconfig;
 uint32_t zeros[64] = { 0x00000000 };
 
@@ -29,11 +29,13 @@ uint32_t zeros[64] = { 0x00000000 };
  *  0: Everything worked fine.
  */
 
-int8_t free80211_send(uint8_t *buffer, uint16_t len) {
-	int8_t rval = 0;
+int8_t free80211_send(uint8_t* buffer, uint16_t len)
+{
+    int8_t rval = 0;
 
-	*(uint32_t *)((uint32_t)&g_wifi_menuconfig - 0x253) = 1;
-	rval = ieee80211_freedom_output(zeros, buffer, len);
-	if (rval == -4) asm("ill");
-	return rval;
+    *(uint32_t*)((uint32_t)&g_wifi_menuconfig - 0x253) = 1;
+    rval = ieee80211_freedom_output(zeros, buffer, len);
+    if (rval == -4)
+        asm("ill");
+    return rval;
 }

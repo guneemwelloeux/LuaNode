@@ -94,7 +94,8 @@ static portMUX_TYPE g_gpio_mux = portMUX_INITIALIZER_UNLOCKED;
 
 static void gpio_intr_reset(uint32 intr_num, uint8 reset)
 {
-    if (intr_num > 7) {
+    if (intr_num > 7)
+    {
         return;
     }
 
@@ -102,9 +103,12 @@ static void gpio_intr_reset(uint32 intr_num, uint8 reset)
     CLEAR_PERI_REG_MASK(PCNT_CTRL, BIT(intr_num * 2 + 1));
 
     //bit PCNT_PLUS_CNT_RST_U0-7
-    if (reset) {
+    if (reset)
+    {
         SET_PERI_REG_MASK(PCNT_CTRL, BIT(intr_num * 2));
-    } else {
+    }
+    else
+    {
         CLEAR_PERI_REG_MASK(PCNT_CTRL, BIT(intr_num * 2));
     }
 }
@@ -122,16 +126,23 @@ static void gpio_intr_init(uint32 intr_num, gpio_int_type_t intr_type)
     SET_PERI_REG_BITS(cfg0_addr, PCNT_CH0_LCTRL_MODE_U0, 0, PCNT_CH0_LCTRL_MODE_U0_S);
     SET_PERI_REG_BITS(cfg0_addr, PCNT_CH0_HCTRL_MODE_U0, 0, PCNT_CH0_HCTRL_MODE_U0_S);
 
-    if (intr_type == GPIO_INTR_NEGEDGE) {
+    if (intr_type == GPIO_INTR_NEGEDGE)
+    {
         SET_PERI_REG_BITS(cfg0_addr, PCNT_CH0_POS_MODE_U0, 0, PCNT_CH0_POS_MODE_U0_S);
         SET_PERI_REG_BITS(cfg0_addr, PCNT_CH0_NEG_MODE_U0, 1, PCNT_CH0_NEG_MODE_U0_S);
-    } else if (intr_type == GPIO_INTR_POSEDGE) {
+    }
+    else if (intr_type == GPIO_INTR_POSEDGE)
+    {
         SET_PERI_REG_BITS(cfg0_addr, PCNT_CH0_POS_MODE_U0, 1, PCNT_CH0_POS_MODE_U0_S);
         SET_PERI_REG_BITS(cfg0_addr, PCNT_CH0_NEG_MODE_U0, 0, PCNT_CH0_NEG_MODE_U0_S);
-    } else if (intr_type == GPIO_INTR_ANYEDGE) {
+    }
+    else if (intr_type == GPIO_INTR_ANYEDGE)
+    {
         SET_PERI_REG_BITS(cfg0_addr, PCNT_CH0_POS_MODE_U0, 1, PCNT_CH0_POS_MODE_U0_S);
         SET_PERI_REG_BITS(cfg0_addr, PCNT_CH0_NEG_MODE_U0, 1, PCNT_CH0_NEG_MODE_U0_S);
-    } else {
+    }
+    else
+    {
         SET_PERI_REG_BITS(cfg0_addr, PCNT_CH0_POS_MODE_U0, 0, PCNT_CH0_POS_MODE_U0_S);
         SET_PERI_REG_BITS(cfg0_addr, PCNT_CH0_NEG_MODE_U0, 0, PCNT_CH0_NEG_MODE_U0_S);
     }
@@ -139,8 +150,7 @@ static void gpio_intr_init(uint32 intr_num, gpio_int_type_t intr_type)
     SET_PERI_REG_BITS(cfg1_addr, PCNT_CNT_THRES0_U0, 1, PCNT_CNT_THRES0_U0_S);
     SET_PERI_REG_BITS(cfg2_addr, PCNT_CNT_L_LIM_U0, 10, PCNT_CNT_L_LIM_U0_S);
     SET_PERI_REG_BITS(cfg2_addr, PCNT_CNT_H_LIM_U0, 10, PCNT_CNT_H_LIM_U0_S);
-    CLEAR_PERI_REG_MASK(cfg0_addr, (PCNT_THR_THRES1_EN_U0 | PCNT_THR_L_LIM_EN_U0
-                                    | PCNT_THR_H_LIM_EN_U0 | PCNT_THR_ZERO_EN_U0 | PCNT_FILTER_EN_U0));
+    CLEAR_PERI_REG_MASK(cfg0_addr, (PCNT_THR_THRES1_EN_U0 | PCNT_THR_L_LIM_EN_U0 | PCNT_THR_H_LIM_EN_U0 | PCNT_THR_ZERO_EN_U0 | PCNT_FILTER_EN_U0));
 
     SET_PERI_REG_MASK(cfg0_addr, PCNT_THR_THRES0_EN_U0);
     SET_PERI_REG_MASK(PCNT_INT_ENA, BIT(intr_num));
@@ -149,7 +159,8 @@ static void gpio_intr_init(uint32 intr_num, gpio_int_type_t intr_type)
 //intr_num only support 0-7
 void gpio_intr_config(uint32 gpio_num, uint32 intr_num, GPIO_INT_TYPE intr_type)
 {
-    if (intr_num >= sizeof(intr_gpio_nums)) {
+    if (intr_num >= sizeof(intr_gpio_nums))
+    {
         return;
     }
 
@@ -183,15 +194,17 @@ void gpio_intr_process(void)
     uint8 gpio_num;
     intr_status = READ_PERI_REG(PCNT_INT_ST);
 
-    while ((intr_num = __builtin_ctz(intr_status)) >= 0) {
+    while ((intr_num = __builtin_ctz(intr_status)) >= 0)
+    {
         intr_status &= ~BIT(intr_num);
         gpio_num = intr_gpio_nums[intr_num];
         gpio_intr_clear(intr_num);
 
-        switch (gpio_num) {
-            default:
-                printf("gpio %d intr come\n", gpio_num);
-                break;
+        switch (gpio_num)
+        {
+        default:
+            printf("gpio %d intr come\n", gpio_num);
+            break;
         }
     }
 }
@@ -256,7 +269,8 @@ void gpio_intr_process(void)
 
 void gpio_output_sigmadelta_enable(uint32 gpio_num, uint32 sigma_num, uint32 prescale)
 {
-    if (sigma_num >= 8) {
+    if (sigma_num >= 8)
+    {
         return;
     }
 
